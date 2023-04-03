@@ -24,7 +24,7 @@ services:
     ports:
       - '3306:3306'
     environment:
-      MYSQL_DATABASE: 'db_django'
+      MYSQL_DATABASE: ''
       MYSQL_PASSWORD: 'password'
       MYSQL_ROOT_PASSWORD: 'password'
     volumes:

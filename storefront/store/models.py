@@ -7,7 +7,7 @@ class Promotion(models.Model):
     
 class Collection(models.Model):
     title = models.CharField(max_length=255)
-    featured_product = models.ForeignKey('Product', on_delete=models.SET_NULL, related_name='+',null=True)
+    featured_product = models.ForeignKey('Product', on_delete=models.SET_NULL, related_name='+',null=True, blank=True)
     
     def __str__(self):
         return self.title
