@@ -1,23 +1,34 @@
 from rest_framework import serializers
 
-from .models import Product,Collection
+from .models import Product,Collection,Review
 
 from decimal import Decimal
 
-class CollectionSerializer(serializers.Serializer):
-    id = serializers.IntegerField()
-    title = serializers.CharField(max_length=255)
+class CollectionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Collection
+        fields = ('id', 'title')
 
-class ProductSerializer(serializers.Serializer):
-    id = serializers.IntegerField(read_only=True)
-    title = serializers.CharField()
-    price = serializers.DecimalField(max_digits=6, decimal_places=2,source='unit_price')
+class ProductSerializer(serializers.ModelSerializer):  
     price_with_tax = serializers.SerializerMethodField()
 
-    collection = serializers.HyperlinkedRelatedField(
-        queryset=Collection.objects.all(),
-        view_name='collection-detail',
-    )
+    # collection = serializers.HyperlinkedRelatedField(
+    #     queryset=Collection.objects.all(),
+    #     view_name='collection-detail'
+    # )
 
     def get_price_with_tax(self,product):
         return product.unit_price * Decimal(1.1)
+    class Meta:
+        model = Product
+        fields = ('id','title','description','slug','inventory','unit_price','price_with_tax','collection')
+
+
+class ReviewSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Review
+        fields = ('id','data','name','description')
+
+    def create(self,validated_data):
+        product_id = self.context['product_id']
+        return Review.objects.create(**validated_data,product_id=product_id)

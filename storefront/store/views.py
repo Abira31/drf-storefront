@@ -1,33 +1,30 @@
 from rest_framework.response import Response
-from rest_framework.decorators import api_view
 from rest_framework import status
+from rest_framework.generics import (ListCreateAPIView,
+                                    RetrieveUpdateDestroyAPIView)
+from rest_framework import viewsets
 
-from django.shortcuts import get_object_or_404
-from django.db.models import Prefetch
+from .serializers import (ProductSerializer,
+                        CollectionSerializer,
+                        ReviewSerializer)
 
-from .serializers import ProductSerializer,CollectionSerializer
-
-from .models import Product,Collection
-
-@api_view()
-def product_list(request):
-    queryset = Product.objects.only('id', 'title', 'unit_price','collection').all()\
-        .prefetch_related('collection')
-    serializer = ProductSerializer(queryset, many=True,context={'request': request})
-    return Response(serializer.data)
+from .models import Product,Collection,Review
 
 
-@api_view()
-def product_detail(request, pk):
-    product = Product.objects.only('id','title','unit_price')
-    product = get_object_or_404(product, pk=pk)
-    serializer = ProductSerializer(product)
-    return Response(serializer.data)
+class ProducViewSet(viewsets.ModelViewSet):
+    serializer_class = ProductSerializer
+    queryset = Product.objects.only('id','title','description','slug','inventory','unit_price','collection').all()\
+        .prefetch_related('collection')   
 
-@api_view()
-def collection_detail(request, pk):
-    
-    collection = Collection.objects.only('id','title')
-    collection = get_object_or_404(collection, pk=pk)
-    serializer = CollectionSerializer(collection)
-    return Response(serializer.data)
+class CollectionViewSet(viewsets.ModelViewSet):
+    serializer_class = CollectionSerializer
+    queryset = Collection.objects.only('id','title').all()
+
+class ReviewViewSet(viewsets.ModelViewSet):
+    serializer_class = ReviewSerializer
+
+    def get_queryset(self):
+        return Review.objects.only('id','data','name','description').filter(product_id=self.kwargs['product_pk'])
+
+    def get_serializer_context(self):
+        return {'product_id': self.kwargs['product_pk']}
