@@ -5,19 +5,23 @@ from rest_framework.generics import (ListCreateAPIView,
 from rest_framework import viewsets,mixins
 from rest_framework.filters import SearchFilter,OrderingFilter
 from rest_framework.pagination import PageNumberPagination
+from rest_framework.decorators import action
 
 from django_filters.rest_framework import DjangoFilterBackend
 from django.db.models import Sum,F
+from django.shortcuts import get_object_or_404
+
 from .serializers import (ProductSerializer,
                         CollectionSerializer,
                         ReviewSerializer,
                         CartSerializer,
                         CartItemSerializer,
-                        AddCartItemSerializer)
+                        AddCartItemSerializer,
+                        CustomerSerializer)
 
 from .models import (Product,Collection,
                     Review,Cart,
-                    CartItem)
+                    CartItem,Customer)
 from .filters import ProductFilter
 from .pagination import DefaultPagination
 
@@ -67,3 +71,24 @@ class CartItemViewSet(viewsets.ModelViewSet):
     
     def get_serializer_context(self):
         return {'cart_id':self.kwargs['cart_pk']}
+
+class CustomerViewSet(mixins.CreateModelMixin,
+                    mixins.RetrieveModelMixin,
+                    mixins.UpdateModelMixin,
+                    viewsets.GenericViewSet):
+    serializer_class = CustomerSerializer
+    queryset = Customer.objects.all()
+
+    @action(detail=False,methods=['get','put'])
+    def me(self,request):
+        if request.user.is_authenticated:
+            customer = get_object_or_404(Customer,user_id=request.user.id)
+            if request.method == 'GET':
+                serializer = CustomerSerializer(customer)
+            else:
+                serializer = CustomerSerializer(customer,data=request.data)
+                serializer.is_valid(raise_exception=True)
+                serializer.save()
+            return Response(serializer.data,status=status.HTTP_200_OK)
+        return Response(status=status.HTTP_401_UNAUTHORIZED)
+        

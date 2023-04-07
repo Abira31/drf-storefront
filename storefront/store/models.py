@@ -1,5 +1,7 @@
 from django.db import models
+from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator
+from django.contrib import admin
 from uuid import uuid4
 
 class Promotion(models.Model):
@@ -57,12 +59,22 @@ class Customer(models.Model):
         choices=MEMBERSHIP_CHOICES,
         default=MEMBERSHIP_BRONZE
     )
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+
 
     def __str__(self):
-        return f'{self.first_name} {self.last_name}'
-    
+        return f'{self.user.first_name} {self.user.last_name}'
+
+    @admin.display(ordering='user__first_name')
+    def first_name(self):
+        return self.user.first_name
+
+    @admin.display(ordering='user__last_name')
+    def last_name(self):
+        return self.user.last_name
+
     class Meta:
-        ordering = ['last_name', 'first_name']
+        ordering = ['user__first_name', 'user__last_name']
     
 
 class Order(models.Model):
