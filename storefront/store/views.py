@@ -6,6 +6,7 @@ from rest_framework import viewsets,mixins
 from rest_framework.filters import SearchFilter,OrderingFilter
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated,AllowAny,IsAdminUser,SAFE_METHODS
 
 from django_filters.rest_framework import DjangoFilterBackend
 from django.db.models import Sum,F
@@ -24,6 +25,8 @@ from .models import (Product,Collection,
                     CartItem,Customer)
 from .filters import ProductFilter
 from .pagination import DefaultPagination
+from .permissions import IsAdminOrReadOnly,FullDjangoModelPermissions
+
 
 class ProducViewSet(viewsets.ModelViewSet):
     serializer_class = ProductSerializer
@@ -34,10 +37,12 @@ class ProducViewSet(viewsets.ModelViewSet):
     pagination_class = DefaultPagination
     search_fields = ['title','description']
     ordering_fields = ['unit_price','last_updated']
+    permission_classes = [IsAdminOrReadOnly]
 
 class CollectionViewSet(viewsets.ModelViewSet):
     serializer_class = CollectionSerializer
     queryset = Collection.objects.only('id','title').all()
+    permission_classes = [IsAdminOrReadOnly]
 
 class ReviewViewSet(viewsets.ModelViewSet):
     serializer_class = ReviewSerializer
@@ -78,8 +83,14 @@ class CustomerViewSet(mixins.CreateModelMixin,
                     viewsets.GenericViewSet):
     serializer_class = CustomerSerializer
     queryset = Customer.objects.all()
+    permission_classes = [FullDjangoModelPermissions]
 
-    @action(detail=False,methods=['get','put'])
+    def get_permissions(self):
+        if self.request.method in SAFE_METHODS:
+            return [AllowAny()]
+        return [IsAuthenticated()]
+
+    @action(detail=False,methods=['get','put'],permission_classes=[IsAuthenticated])
     def me(self,request):
         if request.user.is_authenticated:
             customer = get_object_or_404(Customer,user_id=request.user.id)

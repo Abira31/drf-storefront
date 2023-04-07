@@ -9,11 +9,6 @@ services:
       - "9000:9000"
     volumes:
       - ./storefront:/storefront
-    # environment:
-    #   - DB_HOST=db
-    #   - DB_NAME=db_django
-    #   - DB_USER=root
-    #   - DB_PASS=password
     command: >
       sh -c "python manage.py runserver 0.0.0.0:9000"
     depends_on:
