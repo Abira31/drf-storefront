@@ -22,6 +22,7 @@ services:
       sh -c "python manage.py runserver 0.0.0.0:9000"
     depends_on:
       - db
+      - redis
   
   db:
     image: mysql:5.7
@@ -35,3 +36,20 @@ services:
      - ./db:/var/lib/mysql
     restart: always
 
+  redis:
+    image: redis:7.0-alpine
+    hostname: redis
+
+  worker:
+    build:
+      context: .
+    hostname: worker
+    entrypoint: celery
+    command: -A storefront worker --loglevel=info
+    volumes:
+      - ./storefront:/storefront
+    links:
+      - redis
+    depends_on:
+      - db
+      - redis
