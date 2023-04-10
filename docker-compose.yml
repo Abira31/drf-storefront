@@ -1,6 +1,15 @@
 version: '3'
 
 services:
+  client:
+    user: $UID:$GID
+    build:
+      context:
+        ./Node
+    ports:
+      - "8001:8001"
+    command: "npm start"
+
   storefront:
     user: $UID:$GID
     build:

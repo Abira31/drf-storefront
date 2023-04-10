@@ -6,3 +6,5 @@ django-mysql==3.8.1
 django_filter
 djoser==2.1.0
 djangorestframework-simplejwt
+pillow
+django-cors-headers
