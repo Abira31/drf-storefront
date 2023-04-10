@@ -4,6 +4,8 @@ from django.core.validators import MinValueValidator
 from django.contrib import admin
 from uuid import uuid4
 
+from .validators import validate_file_size
+
 class Promotion(models.Model):
     description = models.CharField(max_length=255)
     discount = models.FloatField()
@@ -31,12 +33,15 @@ class Product(models.Model):
     last_update = models.DateTimeField(auto_now=True)
     collection = models.ForeignKey(Collection,on_delete=models.PROTECT,related_name='products')
     promotions = models.ManyToManyField(Promotion,blank=True)
-
     def __str__(self):
         return self.title
     
     class Meta:
         ordering = ['title']
+
+class ProductImage(models.Model):
+    product = models.ForeignKey(Product,on_delete=models.CASCADE,related_name='images')
+    image = models.ImageField(upload_to='store/images',validators=[validate_file_size])
 
 class Customer(models.Model):
     MEMBERSHIP_BRONZE = 'B'

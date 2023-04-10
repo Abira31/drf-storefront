@@ -6,7 +6,8 @@ from .models import (Product,Collection,
                     CartItem,
                     Customer,
                     Order,
-                    OrderItem)
+                    OrderItem,
+                    ProductImage)
 
 from decimal import Decimal
 
@@ -15,9 +16,18 @@ class CollectionSerializer(serializers.ModelSerializer):
         model = Collection
         fields = ('id', 'title')
 
-class ProductSerializer(serializers.ModelSerializer):  
-    price_with_tax = serializers.SerializerMethodField()
+class ProductImageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProductImage
+        fields = ('id','image')
 
+    def create(self, validated_data):
+        product_id = self.context['product_id']
+        return ProductImage.objects.create(product_id=product_id,**validated_data)
+
+class ProductSerializer(serializers.ModelSerializer):
+    price_with_tax = serializers.SerializerMethodField()
+    images = ProductImageSerializer(many=True,read_only=True)
     # collection = serializers.HyperlinkedRelatedField(
     #     queryset=Collection.objects.all(),
     #     view_name='collection-detail'
@@ -27,7 +37,8 @@ class ProductSerializer(serializers.ModelSerializer):
         return product.unit_price * Decimal(1.1)
     class Meta:
         model = Product
-        fields = ('id','title','description','slug','inventory','unit_price','price_with_tax','collection')
+        fields = ('id','title','description','slug','inventory',
+                  'unit_price','price_with_tax','collection','images')
 
 
 class ReviewSerializer(serializers.ModelSerializer):
@@ -147,9 +158,6 @@ class CreateOrderSerializer(serializers.Serializer):
                 ) for item in cart_items
             ]
             OrderItem.objects.bulk_create(order_items)
-
             Cart.objects.filter(pk=cart_id).delete()
-
-            order_created.send_robust(self.__class__, order=order)
-
             return order
+
